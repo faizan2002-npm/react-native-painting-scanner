@@ -31,9 +31,16 @@ public class DocumentScannerViewManager extends ViewGroupManager<MainView> {
     protected MainView createViewInstance(final ThemedReactContext reactContext) {
         // OpenNoteCameraView view = new OpenNoteCameraView(reactContext, -1,
         // reactContext.getCurrentActivity());
-        MainView.createInstance(reactContext, (Activity) reactContext.getBaseContext());
+        Activity activity = reactContext.getCurrentActivity();
+        if (activity == null) {
+            throw new RuntimeException("Cannot get current activity for DocumentScanner");
+        }
+        MainView.createInstance(reactContext, activity);
 
         view = MainView.getInstance();
+        if (view == null) {
+            throw new RuntimeException("Failed to create MainView instance");
+        }
         view.setOnProcessingListener(new OpenNoteCameraView.OnProcessingListener() {
             @Override
             public void onProcessingChange(WritableMap data) {

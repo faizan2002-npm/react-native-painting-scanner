@@ -60,7 +60,7 @@ public class DocumentScannerModule extends ReactContextBaseJavaModule{
                 if (matOfByteInput != null) {
                     matOfByteInput.release();
                 }
-                promise.reject("DECODE_ERROR", "Failed to decode image", null);
+                promise.reject("DECODE_ERROR", "Failed to decode image", (Throwable) null);
                 return;
             }
             
@@ -75,7 +75,7 @@ public class DocumentScannerModule extends ReactContextBaseJavaModule{
                 if (matOfByteInput != null) {
                     matOfByteInput.release();
                 }
-                promise.reject("INVALID_COORDINATES", "Missing coordinate data", null);
+                promise.reject("INVALID_COORDINATES", "Missing coordinate data", (Throwable) null);
                 return;
             }
             
@@ -94,7 +94,7 @@ public class DocumentScannerModule extends ReactContextBaseJavaModule{
                 if (matOfByteInput != null) {
                     matOfByteInput.release();
                 }
-                promise.reject("PROCESS_ERROR", "Failed to process image", null);
+                promise.reject("PROCESS_ERROR", "Failed to process image", (Throwable) null);
                 return;
             }
             

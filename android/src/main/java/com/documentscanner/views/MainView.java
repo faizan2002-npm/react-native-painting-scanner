@@ -45,54 +45,54 @@ public class MainView extends FrameLayout {
     }
 
     public void setDocumentAnimation(boolean animate) {
-        view.setDocumentAnimation(animate);
+        if (view != null) view.setDocumentAnimation(animate);
     }
 
     public void setDetectionCountBeforeCapture(int numberOfRectangles) {
-        view.setDetectionCountBeforeCapture(numberOfRectangles);
+        if (view != null) view.setDetectionCountBeforeCapture(numberOfRectangles);
     }
 
     public void setEnableTorch(boolean enable) {
-        view.setEnableTorch(enable);
+        if (view != null) view.setEnableTorch(enable);
     }
 
     public void setOnScannerListener(OpenNoteCameraView.OnScannerListener listener) {
-        view.setOnScannerListener(listener);
+        if (view != null) view.setOnScannerListener(listener);
     }
 
     public void removeOnScannerListener() {
-        view.removeOnScannerListener();
+        if (view != null) view.removeOnScannerListener();
     }
 
     public void setOnProcessingListener(OpenNoteCameraView.OnProcessingListener listener) {
-        view.setOnProcessingListener(listener);
+        if (view != null) view.setOnProcessingListener(listener);
     }
 
     public void removeOnProcessingListener() {
-        view.removeOnProcessingListener();
+        if (view != null) view.removeOnProcessingListener();
     }
 
     public void setOverlayColor(String rgbaColor) {
-        view.setOverlayColor(rgbaColor);
+        if (view != null) view.setOverlayColor(rgbaColor);
     }
 
     public void setBrightness(double brightness) {
-        view.setBrightness(brightness);
+        if (view != null) view.setBrightness(brightness);
     }
 
     public void setContrast(double contrast) {
-        view.setContrast(contrast);
+        if (view != null) view.setContrast(contrast);
     }
 
     public void setManualOnly(boolean manualOnly) {
-        view.setManualOnly(manualOnly);
+        if (view != null) view.setManualOnly(manualOnly);
     }
 
     public void setRemoveGrayScale(boolean grayscale) {
-        view.setRemoveGrayScale(grayscale);
+        if (view != null) view.setRemoveGrayScale(grayscale);
     }
 
     public void capture() {
-        view.capture();
+        if (view != null) view.capture();
     }
 }

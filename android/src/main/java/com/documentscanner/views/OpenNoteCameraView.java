@@ -218,45 +218,64 @@ public class OpenNoteCameraView extends JavaCameraView implements PictureCallbac
     }
 
     public void initOpenCv(Context context) {
+        try {
+            mThis = this;
 
-        mThis = this;
-
-        mHud = (HUDCanvasView) mView.findViewById(R.id.hud);
-        mWaitSpinner = mView.findViewById(R.id.wait_spinner);
-        blinkView = mView.findViewById(R.id.blink_view);
-        blinkView.setBackgroundColor(Color.WHITE);
-
-        mVisible = true;
-
-        mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-        Display display = mActivity.getWindowManager().getDefaultDisplay();
-        android.graphics.Point size = new android.graphics.Point();
-        display.getRealSize(size);
-
-        BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(context) {
-            @Override
-            public void onManagerConnected(int status) {
-                switch (status) {
-                case LoaderCallbackInterface.SUCCESS: {
-                    Log.d(TAG, "SUCCESS init openCV: " + status);
-                    // System.loadLibrary("ndklibrarysample");
-                    enableCameraView();
-                }
-                    break;
-                default: {
-                    Log.d(TAG, "ERROR init Opencv: " + status);
-                    super.onManagerConnected(status);
-                }
-                    break;
-                }
+            mHud = (HUDCanvasView) mView.findViewById(R.id.hud);
+            mWaitSpinner = mView.findViewById(R.id.wait_spinner);
+            blinkView = mView.findViewById(R.id.blink_view);
+            if (blinkView != null) {
+                blinkView.setBackgroundColor(Color.WHITE);
             }
-        };
 
-        if (!OpenCVLoader.initDebug()) {
-            CustomOpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, context, mLoaderCallback);
-        } else {
-            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+            mVisible = true;
+
+            if (mActivity != null && mActivity.getWindow() != null) {
+                mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            }
+
+            Display display = null;
+            if (mActivity != null && mActivity.getWindowManager() != null) {
+                display = mActivity.getWindowManager().getDefaultDisplay();
+            }
+            android.graphics.Point size = new android.graphics.Point();
+            if (display != null) {
+                display.getRealSize(size);
+            }
+
+            BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(context) {
+                @Override
+                public void onManagerConnected(int status) {
+                    try {
+                        switch (status) {
+                        case LoaderCallbackInterface.SUCCESS: {
+                            Log.d(TAG, "SUCCESS init openCV: " + status);
+                            // System.loadLibrary("ndklibrarysample");
+                            enableCameraView();
+                        }
+                            break;
+                        default: {
+                            Log.e(TAG, "ERROR init Opencv: " + status);
+                            super.onManagerConnected(status);
+                        }
+                            break;
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Exception in OpenCV callback: " + e.getMessage(), e);
+                    }
+                }
+            };
+
+            if (!OpenCVLoader.initDebug()) {
+                Log.d(TAG, "OpenCV initDebug failed, trying async init");
+                CustomOpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_1_0, context, mLoaderCallback);
+            } else {
+                Log.d(TAG, "OpenCV initDebug succeeded");
+                mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Exception in initOpenCv: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to initialize OpenCV: " + e.getMessage(), e);
         }
 
         if (mImageThread == null) {

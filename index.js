@@ -33,11 +33,14 @@ class PdfScanner extends React.Component {
     if (Platform.OS !== "android") return;
     try {
       const granted = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.CAMERA,
         PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
         PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
       ]);
 
       if (
+        granted["android.permission.CAMERA"] ===
+          PermissionsAndroid.RESULTS.GRANTED &&
         granted["android.permission.READ_EXTERNAL_STORAGE"] ===
           PermissionsAndroid.RESULTS.GRANTED &&
         granted["android.permission.WRITE_EXTERNAL_STORAGE"] ===
@@ -46,6 +49,7 @@ class PdfScanner extends React.Component {
         this.setState({ permissionsAuthorized: true });
       else this.onPermissionsDenied();
     } catch (err) {
+      console.error("Permission error:", err);
       this.onPermissionsDenied();
     }
   }
