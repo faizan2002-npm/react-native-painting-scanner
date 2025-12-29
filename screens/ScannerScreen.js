@@ -89,6 +89,11 @@ export default class ScannerScreen extends Component {
     
     // Prevent multiple simultaneous edits
     if (isProcessing || !originalImage || !rectangleCoordinates) {
+      console.warn('Cannot edit: missing data', { 
+        isProcessing, 
+        hasOriginalImage: !!originalImage, 
+        hasCoordinates: !!rectangleCoordinates 
+      });
       return;
     }
 
@@ -103,6 +108,10 @@ export default class ScannerScreen extends Component {
         throw new Error('RNPdfScannerManager not available');
       }
 
+      if (!RNPdfScannerManager.reapplyPerspectiveCrop) {
+        throw new Error('reapplyPerspectiveCrop method not available');
+      }
+
       // Get quality from scanner ref if available, otherwise use default
       const quality = this.scannerRef?.props?.quality || 0.8;
       
@@ -115,20 +124,45 @@ export default class ScannerScreen extends Component {
       }
       // Android returns file:// paths, which the native module now handles
       
+      console.log('Calling reapplyPerspectiveCrop with:', {
+        imageInputType: typeof imageInput,
+        imageInputLength: imageInput?.length,
+        hasCoordinates: !!rectangleCoordinates,
+        quality
+      });
+      
       const croppedImage = await RNPdfScannerManager.reapplyPerspectiveCrop(
         imageInput,
         rectangleCoordinates,
         quality
       );
 
+      if (!croppedImage) {
+        throw new Error('Native module returned null/undefined result');
+      }
+
+      // Format result based on platform
+      // iOS returns base64 string, Android returns base64 string or file path
+      let formattedImage = croppedImage;
+      if (Platform.OS === 'ios' && !croppedImage.startsWith('data:') && !croppedImage.startsWith('file://')) {
+        // iOS returns base64 without prefix, add it for Image component
+        formattedImage = `data:image/jpeg;base64,${croppedImage}`;
+      }
+
       // Update captured image
       this.setState({
-        capturedImage: croppedImage,
+        capturedImage: formattedImage,
         isProcessing: false
       });
 
     } catch (error) {
       console.error('Error re-applying crop:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        originalImage: originalImage?.substring(0, 50),
+        hasCoordinates: !!rectangleCoordinates
+      });
       // Show error message to user (optional)
       this.setState({ isProcessing: false });
     }
@@ -155,7 +189,7 @@ export default class ScannerScreen extends Component {
     const { lastDetectionType, stableCounter } = this.state;
     
     if (stableCounter > 0) {
-      return `✓ Ready to capture (${stableCounter})`;
+      return `✓ Ready to capture`;
     }
     
     switch (lastDetectionType) {
@@ -189,15 +223,16 @@ export default class ScannerScreen extends Component {
             useBase64
             captureMultiple={true}
             onPictureTaken={this.handlePictureTaken}
-            overlayColor="rgba(0, 255, 0, 0.3)"
+            overlayColor="rgba(54, 120, 226, 0.28)"
             enableTorch={flashEnabled}
-            brightness={0.2}
-            saturation={1}
-            contrast={1.1}
-            quality={0.8}
+            // brightness={1}
+            // saturation={1}
+            // contrast={1.1}
+            // quality={0.8}
             onRectangleDetect={this.handleRectangleDetect}
             detectionCountBeforeCapture={5}
-            detectionRefreshRateInMS={50}
+            detectionRefreshRateInMS={30}
+            manualOnly={true}
             style={styles.scanner}
           />
 
@@ -357,7 +392,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 15,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    // backgroundColor: 'rgba(0,0,0,0.5)',
     zIndex: 10
   },
   backButton: {

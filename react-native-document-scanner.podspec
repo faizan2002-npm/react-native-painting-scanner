@@ -9,9 +9,9 @@ Pod::Spec.new do |s|
   s.homepage      = "https://github.com/Michaelvilleneuve/react-native-document-scanner"
   s.license       = package["license"]
   s.authors       = package["author"]
-  s.platform      = :ios, "9.0"
+  s.platform      = :ios, "15.1"
   s.source        = { :git => "#{s.homepage}", :tag => "#{s.version}" }
   s.source_files  = "ios/**/*.{h,m}"
   s.requires_arc  = true
-  s.dependency 'React'
+  s.dependency 'React-Core'
 end

@@ -26,10 +26,6 @@
     if (self.onRectangleDetect) {
         self.onRectangleDetect(@{@"stableCounter": @(self.stableCounter), @"lastDetectionType": @(type)});
     }
-
-    if (self.stableCounter > self.detectionCountBeforeCapture){
-        [self capture];
-    }
 }
 
 - (void) capture {
@@ -92,14 +88,32 @@
                             withCoordinates:(NSDictionary *)coordinates 
                                     quality:(float)quality {
     @try {
+        if (!base64Image || base64Image.length == 0) {
+            NSLog(@"Error: base64Image is nil or empty");
+            return nil;
+        }
+        
+        if (!coordinates) {
+            NSLog(@"Error: coordinates is nil");
+            return nil;
+        }
+        
+        // Clean base64 string - remove whitespace and newlines
+        // The base64 might have been encoded with NSDataBase64Encoding64CharacterLineLength
+        NSString *cleanedBase64 = [base64Image stringByReplacingOccurrencesOfString:@"\n" withString:@""];
+        cleanedBase64 = [cleanedBase64 stringByReplacingOccurrencesOfString:@"\r" withString:@""];
+        cleanedBase64 = [cleanedBase64 stringByReplacingOccurrencesOfString:@" " withString:@""];
+        
         // Decode base64 to UIImage
-        NSData *imageData = [[NSData alloc] initWithBase64EncodedString:base64Image options:0];
-        if (!imageData) {
+        NSData *imageData = [[NSData alloc] initWithBase64EncodedString:cleanedBase64 options:NSDataBase64DecodingIgnoreUnknownCharacters];
+        if (!imageData || imageData.length == 0) {
+            NSLog(@"Error: Failed to decode base64 image data. Base64 length: %lu", (unsigned long)cleanedBase64.length);
             return nil;
         }
         
         UIImage *originalImage = [UIImage imageWithData:imageData];
         if (!originalImage) {
+            NSLog(@"Error: Failed to create UIImage from data");
             return nil;
         }
         
@@ -112,6 +126,14 @@
         }
         
         CIImage *ciImage = [CIImage imageWithCGImage:originalImage.CGImage];
+        if (!ciImage) {
+            NSLog(@"Error: Failed to create CIImage from UIImage");
+            return nil;
+        }
+        
+        NSLog(@"Original image size: %.2f x %.2f, CIImage extent: %@", 
+              originalImage.size.width, originalImage.size.height,
+              NSStringFromCGRect(ciImage.extent));
         
         // Extract coordinates from dictionary
         // Stored format (portrait view with y/x swapped):
@@ -120,12 +142,31 @@
         // bottomLeft: {y: bottomRight.x, x: bottomRight.y}
         // bottomRight: {y: topRight.x, x: topRight.y}
         
-        NSDictionary *topLeftDict = coordinates[@"topLeft"];
-        NSDictionary *topRightDict = coordinates[@"topRight"];
-        NSDictionary *bottomLeftDict = coordinates[@"bottomLeft"];
-        NSDictionary *bottomRightDict = coordinates[@"bottomRight"];
+        id topLeftObj = coordinates[@"topLeft"];
+        id topRightObj = coordinates[@"topRight"];
+        id bottomLeftObj = coordinates[@"bottomLeft"];
+        id bottomRightObj = coordinates[@"bottomRight"];
+        
+        // Check for NSNull (React Native uses NSNull instead of nil)
+        if ([topLeftObj isKindOfClass:[NSNull class]] || 
+            [topRightObj isKindOfClass:[NSNull class]] || 
+            [bottomLeftObj isKindOfClass:[NSNull class]] || 
+            [bottomRightObj isKindOfClass:[NSNull class]]) {
+            NSLog(@"Error: One or more coordinates is NSNull");
+            return nil;
+        }
+        
+        NSDictionary *topLeftDict = (NSDictionary *)topLeftObj;
+        NSDictionary *topRightDict = (NSDictionary *)topRightObj;
+        NSDictionary *bottomLeftDict = (NSDictionary *)bottomLeftObj;
+        NSDictionary *bottomRightDict = (NSDictionary *)bottomRightObj;
         
         if (!topLeftDict || !topRightDict || !bottomLeftDict || !bottomRightDict) {
+            NSLog(@"Error: Missing coordinate dictionaries. topLeft: %@, topRight: %@, bottomLeft: %@, bottomRight: %@", 
+                  topLeftDict ? @"exists" : @"nil",
+                  topRightDict ? @"exists" : @"nil",
+                  bottomLeftDict ? @"exists" : @"nil",
+                  bottomRightDict ? @"exists" : @"nil");
             return nil;
         }
         
@@ -138,6 +179,12 @@
         double storedBottomLeftX = [bottomLeftDict[@"x"] doubleValue];
         double storedBottomRightY = [bottomRightDict[@"y"] doubleValue];
         double storedBottomRightX = [bottomRightDict[@"x"] doubleValue];
+        
+        NSLog(@"Extracted coordinates - topLeft: (%.2f, %.2f), topRight: (%.2f, %.2f), bottomLeft: (%.2f, %.2f), bottomRight: (%.2f, %.2f)",
+              storedTopLeftX, storedTopLeftY,
+              storedTopRightX, storedTopRightY,
+              storedBottomLeftX, storedBottomLeftY,
+              storedBottomRightX, storedBottomRightY);
         
         // Reverse the transformation to get back to landscape CIRectangleFeature format:
         // From stored topLeft {y, x} where y = bottomLeft.x + 30, x = bottomLeft.y
@@ -168,22 +215,57 @@
         rectangleCoordinates[@"inputBottomLeft"] = [CIVector vectorWithCGPoint:newBottomLeft];
         rectangleCoordinates[@"inputBottomRight"] = [CIVector vectorWithCGPoint:newBottomRight];
         
+        NSLog(@"Applying perspective correction with points - topLeft: %@, topRight: %@, bottomLeft: %@, bottomRight: %@",
+              NSStringFromCGPoint(newLeft),
+              NSStringFromCGPoint(newRight),
+              NSStringFromCGPoint(newBottomLeft),
+              NSStringFromCGPoint(newBottomRight));
+        
         CIImage *correctedImage = [ciImage imageByApplyingFilter:@"CIPerspectiveCorrection" withInputParameters:rectangleCoordinates];
+        
+        if (!correctedImage) {
+            NSLog(@"Error: Failed to apply perspective correction filter");
+            return nil;
+        }
+        
+        NSLog(@"Perspective correction applied successfully. Corrected image extent: %@", 
+              NSStringFromCGRect(correctedImage.extent));
         
         // Convert CIImage to UIImage
         CIContext *context = [CIContext contextWithOptions:nil];
         CGImageRef cgImage = [context createCGImage:correctedImage fromRect:correctedImage.extent];
+        if (!cgImage) {
+            NSLog(@"Error: Failed to create CGImage from corrected CIImage");
+            return nil;
+        }
+        
         UIImage *finalImage = [UIImage imageWithCGImage:cgImage];
         CGImageRelease(cgImage);
         
+        if (!finalImage) {
+            NSLog(@"Error: Failed to create UIImage from CGImage");
+            return nil;
+        }
+        
         // Convert to base64
         NSData *finalImageData = UIImageJPEGRepresentation(finalImage, quality);
+        if (!finalImageData || finalImageData.length == 0) {
+            NSLog(@"Error: Failed to convert UIImage to JPEG data");
+            return nil;
+        }
+        
         NSString *base64Result = [finalImageData base64EncodedStringWithOptions:NSDataBase64Encoding64CharacterLineLength];
+        
+        if (!base64Result || base64Result.length == 0) {
+            NSLog(@"Error: Failed to encode image data to base64");
+            return nil;
+        }
         
         return base64Result;
     }
     @catch (NSException *exception) {
-        NSLog(@"Error in reapplyPerspectiveCropToImage: %@", exception.reason);
+        NSLog(@"Exception in reapplyPerspectiveCropToImage: %@", exception.reason);
+        NSLog(@"Exception stack: %@", exception.callStackSymbols);
         return nil;
     }
 }

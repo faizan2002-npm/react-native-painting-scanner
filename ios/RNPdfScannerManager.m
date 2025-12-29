@@ -45,7 +45,10 @@ RCT_EXPORT_METHOD(reapplyPerspectiveCrop:(NSString *)base64Image
 {
     // Process image on background queue to avoid blocking UI
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSString *result = [_scannerView reapplyPerspectiveCropToImage:base64Image 
+        // Create a temporary scanner view instance for processing
+        // This doesn't need to be the same instance as the view
+        DocumentScannerView *tempScannerView = [[DocumentScannerView alloc] init];
+        NSString *result = [tempScannerView reapplyPerspectiveCropToImage:base64Image 
                                                        withCoordinates:coordinates 
                                                                quality:quality];
         // Return result on main queue
