@@ -1,0 +1,27 @@
+# Development files
+src/__tests__/
+example/
+*.test.ts
+*.test.tsx
+
+# Build files
+ios/build/
+android/build/
+android/.gradle/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+

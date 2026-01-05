@@ -1,0 +1,31 @@
+{
+  "name": "react-native-painting-scanner",
+  "version": "1.0.0",
+  "description": "A Turbo Module for React Native painting scanner",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "react-native": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "react-native",
+    "turbo-module",
+    "painting-scanner"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "react-native": ">=0.70.0"
+  },
+  "devDependencies": {
+    "@react-native/codegen": "^0.73.0",
+    "@types/react-native": "^0.73.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "react-native": "^0.73.0"
+  }
+}
+
