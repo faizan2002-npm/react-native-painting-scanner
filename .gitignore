@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Generated files
+ios/generated/
+android/generated/
+*.generated.*
+
+# Build files
+build/
+dist/
+*.xcworkspace
+!default.xcworkspace
+*.xcodeproj
+!default.xcworkspace
+DerivedData/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Expo
+.expo/
+.expo-shared/
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+

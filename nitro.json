@@ -1,0 +1,21 @@
+{
+  "cxxNamespace": ["react", "native", "painting", "scanner"],
+  "ios": {
+    "iosModuleName": "PaintingScanner",
+    "autolinking": {
+      "PaintingScanner": {
+        "swift": "HybridPaintingScanner"
+      }
+    }
+  },
+  "android": {
+    "androidNamespace": ["react", "native", "painting", "scanner"],
+    "androidCxxLibName": "react_native_painting_scanner"
+  },
+  "autolinking": {
+    "PaintingScanner": {
+      "swift": "HybridPaintingScanner"
+    }
+  }
+}
+

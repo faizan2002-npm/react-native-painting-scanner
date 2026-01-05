@@ -1,0 +1,9 @@
+example/
+.git/
+.gitignore
+*.md
+!README.md
+GENERATE_BINDINGS.md
+tsconfig.json
+.npmignore
+
